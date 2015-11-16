@@ -28,7 +28,7 @@ int IA(campo *p)
     }
 
   switch(p->jog[p->jog_atual].tipo){
-    case 4:
+    case 3:
     //printf("p1");Sleep(500);
     i=ganhar(p, simb);
     if(i==9){
@@ -60,7 +60,7 @@ int IA(campo *p)
       }
     }
     break;
-  case 3:
+  case 2:
     i=ganhar(p, simb);
     if(i==9){
       i=ganhar(p, simb_op);
@@ -75,7 +75,7 @@ int IA(campo *p)
       }
     }
     break;
-  case 2:
+  case 1:
     //Fazer aleatorio
     break;
   }

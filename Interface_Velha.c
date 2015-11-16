@@ -56,9 +56,9 @@ void atualizar_xo(campo *p)
         if(simb_anim[p->jog[p->jog_atual].simb][k][j]==i){
           p->mapa[a+k][b+j]='#';
           gotoxy(POS_VELHA_X+b+j,POS_VELHA_Y+a+k);
-          definir_cor(COR_FUNDO|simb_cor[p->jog[p->jog_atual].simb]);
+          definir_cor(COR_FUNDO,simb_cor[p->jog[p->jog_atual].simb]);
           printf("#");
-          definir_cor(COR_FUNDO|COR_TEXTO);
+          definir_cor(COR_FUNDO,COR_TEXTO);
         }
       }
     }

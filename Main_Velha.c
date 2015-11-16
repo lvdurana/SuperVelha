@@ -132,18 +132,18 @@ int velha() {
   vl.jog[0].nome[0]='L';
   vl.jog[0].nome[1]='\0';
   vl.jog[0].num=1;
-  vl.jog[0].simb=3;
-  vl.jog[0].tipo=0;
+  vl.jog[0].simb=2;
+  vl.jog[0].tipo=3;
   vl.jog[1].nome[0]='M';
   vl.jog[1].nome[1]='\0';
   vl.jog[1].num=4;
-  vl.jog[1].simb=5;
-  vl.jog[1].tipo=0;
+  vl.jog[1].simb=4;
+  vl.jog[1].tipo=3;
   inicializa_velha(&vl);
   inicializar_mapa(&vl);
   //Desenhar tela
   desenhar_tela(&vl);
-  cursor(&vl,1);
+  //cursor(&vl,1);
   loop_velha(&vl);
   //final_do_jogo(vit);
   return 0;
@@ -153,10 +153,19 @@ void main() {
   int i=0;
   //for(i=200;i<=800;i+=10)
     //Beep(i,200);
+
   printf(" ####\n #  #\n # ##\n## ##\n##   \n\n");
   printf(" ### \n#####\n#####\n  #  \n  #  \n\n\16");
-
-  Sleep(4000);
+  Beep(NOTA_F2,75);
+  Beep(NOTA_F2,75);
+  Beep(NOTA_F2,75);
+  Beep(NOTA_F2,500);
+  Beep(NOTA_CS2,375);
+  Beep(NOTA_DS2,375);
+  Beep(NOTA_F2,250);
+  //Sleep(100);
+  Beep(NOTA_DS2,75);
+  Beep(NOTA_F2,750);
   while(i==0){
     srand (time(NULL));
     i=velha();

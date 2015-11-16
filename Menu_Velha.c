@@ -42,6 +42,9 @@ unsigned char simb_anim[][5][5]={
 char simb_anim_tam[]={4,10,6,8,11,6};
 char simb_cor[]={AZUL_B,VERMELHO_B,ROSA_B,AMARELO_B,CIANO_B,VERDE_B};
 
+//Definir músicas
+
+
 /*int menu()
 {
   int sel=1,go=0;
