@@ -1,15 +1,21 @@
 #include "Interface_Velha.c"
 
+//  Atualizar:
+//  Entradas dif de 0/1 pra 1/2/3
+//  Converter menções à p->mat pra p->p->mat
 
-int AI(int simb, char dif)
+int IA(campo *p)
 {
-  int simb_op=0,i,j;
+  int simb,simb_op=0,i,j,a;
+
+  simb=p->jog[p->jog_atual].num;
+  simb_op=p->jog[p->jog_atual].num^5;
 
   //Jogada Inicial
   for(j=0;j<=2;j++)
     for(i=0;i<=2;i++)
-      simb_op+=mat[i][j];
-  if(!simb_op)
+      a+=p->mat[i][j];
+  if(!a)
     switch(rand()%4){
       case 0:
         return 0;
@@ -21,72 +27,72 @@ int AI(int simb, char dif)
         return 8;
     }
 
-  if(simb==1)
-    simb_op=4;
-  else
-    simb_op=1;
-
-  if(dif){
-  //printf("p1");Sleep(500);
-  i=ganhar(simb);
-  if(i==9){
-    //printf("p2");Sleep(500);
-    i=ganhar(simb_op);
+  switch(p->jog[p->jog_atual].tipo){
+    case 4:
+    //printf("p1");Sleep(500);
+    i=ganhar(p, simb);
     if(i==9){
-      //printf("p3");Sleep(500);
-      i=gerar_vantagem(simb);
+      //printf("p2");Sleep(500);
+      i=ganhar(p, simb_op);
       if(i==9){
-        //printf("p4");Sleep(500);
-        i=bloquear_vantagem(simb, simb_op);
+        //printf("p3");Sleep(500);
+        i=gerar_vantagem(p, simb);
         if(i==9){
-          //printf("p5");Sleep(500);
-          i=jogar_centro(simb);
+          //printf("p4");Sleep(500);
+          i=bloquear_vantagem(p, simb, simb_op);
           if(i==9){
-            //printf("p6");Sleep(500);
-            i=verificar_canto(simb_op);
+            //printf("p5");Sleep(500);
+            i=jogar_centro(p, simb);
             if(i==9){
-              //printf("p7");Sleep(500);
-              i=jogar_canto(simb);
+              //printf("p6");Sleep(500);
+              i=verificar_canto(p, simb_op);
               if(i==9){
-                //printf("p8");Sleep(500);
-                i=jogar_lados(simb);
+                //printf("p7");Sleep(500);
+                i=jogar_canto(p, simb);
+                if(i==9){
+                  //printf("p8");Sleep(500);
+                  i=jogar_lados(p, simb);
+                }
               }
             }
           }
         }
       }
     }
-  }
-  }
-  else{
-    i=ganhar(simb);
+    break;
+  case 3:
+    i=ganhar(p, simb);
     if(i==9){
-      i=ganhar(simb_op);
+      i=ganhar(p, simb_op);
       if(i==9){
-        i=jogar_centro(simb);
+        i=jogar_centro(p, simb);
         if(i==9){
-          i=jogar_canto(simb);
+          i=jogar_canto(p, simb);
           if(i==9){
-            i=jogar_lados(simb);
+            i=jogar_lados(p, simb);
           }
         }
       }
     }
+    break;
+  case 2:
+    //Fazer aleatorio
+    break;
   }
   return i;
 }
 
 
 
-int ganhar(int simb){
+int ganhar(campo *p, int simb){
   char a, b, c, line_h=0, line_v=0;
 
   for(a=0;a<=2;a++)
     for(b=0;b<=2;b++)
-      if(mat[a][b]==0){
+      if(p->mat[a][b]==0){
         for(c=0;c<=2;c++){
-          line_h+=mat[a][c];
-          line_v+=mat[c][b];
+          line_h+=p->mat[a][c];
+          line_v+=p->mat[c][b];
         }
         if((line_h==(simb*2))||(line_v==(simb*2)))
           return a*3+b;
@@ -94,38 +100,38 @@ int ganhar(int simb){
         line_v=0;
       }
   //Verificar Diagonais
-  if((mat[0][0]+mat[1][1]+mat[2][2])==simb*2){
-    if(mat[0][0]==0)
+  if((p->mat[0][0]+p->mat[1][1]+p->mat[2][2])==simb*2){
+    if(p->mat[0][0]==0)
       return 0;
-    if(mat[1][1]==0)
+    if(p->mat[1][1]==0)
       return 4;
-    if(mat[2][2]==0)
+    if(p->mat[2][2]==0)
       return 8;
   }
-  if((mat[0][2]+mat[1][1]+mat[2][0])==simb*2){
-    if(mat[0][2]==0)
+  if((p->mat[0][2]+p->mat[1][1]+p->mat[2][0])==simb*2){
+    if(p->mat[0][2]==0)
       return 2;
-    if(mat[1][1]==0)
+    if(p->mat[1][1]==0)
       return 4;
-    if(mat[2][0]==0)
+    if(p->mat[2][0]==0)
       return 6;
   }
 
   return 9;
 }
 
-int gerar_vantagem(int simb){
+int gerar_vantagem(campo *p, int simb){
   char a, b, c, line_h=0, line_v=0,d1,d2, cont=0;
-  d1=mat[0][0]+mat[1][1]+mat[2][2];
-  d2=mat[0][2]+mat[1][1]+mat[2][0];
+  d1=p->mat[0][0]+p->mat[1][1]+p->mat[2][2];
+  d2=p->mat[0][2]+p->mat[1][1]+p->mat[2][0];
 
   //Verificar se uma jogada pode causar um fork
   for(a=0;a<=2;a++)
     for(b=0;b<=2;b++)
-      if(mat[a][b]==0){
+      if(p->mat[a][b]==0){
         for(c=0;c<=2;c++){
-          line_h+=mat[a][c];
-          line_v+=mat[c][b];
+          line_h+=p->mat[a][c];
+          line_v+=p->mat[c][b];
         }
         if((((a==0)&&(b==0))||((a==1)&&(b==1))||((a==2)&&(b==2)))&&(d1==simb))
           cont++;
@@ -144,19 +150,19 @@ int gerar_vantagem(int simb){
   return 9;
 }
 
-int bloquear_vantagem(int simb, int simb_op){
+int bloquear_vantagem(campo *p, int simb, int simb_op){
   char a, b, c, d, line_h=0, line_v=0, d1, d2, cont_d=0, cont=0, pos[2],e=0;
   int f;
-  d1=(mat[0][0]+mat[1][1]+mat[2][2]);
-  d2=(mat[0][2]+mat[1][1]+mat[2][0]);
+  d1=(p->mat[0][0]+p->mat[1][1]+p->mat[2][2]);
+  d2=(p->mat[0][2]+p->mat[1][1]+p->mat[2][0]);
 
   //Verificar se uma jogada pode causar um fork
   for(a=0;a<=2;a++)
     for(b=0;b<=2;b++)
-      if(mat[a][b]==0){
+      if(p->mat[a][b]==0){
         for(c=0;c<=2;c++){
-          line_h+=mat[a][c];
-          line_v+=mat[c][b];
+          line_h+=p->mat[a][c];
+          line_v+=p->mat[c][b];
         }
         if((((a==0)&&(b==0))||((a==1)&&(b==1))||((a==2)&&(b==2)))&&(d1==simb_op))
           cont_d++;
@@ -179,10 +185,10 @@ int bloquear_vantagem(int simb, int simb_op){
   if(cont){
     for(a=0;a<=2;a++)
       for(b=0;b<=2;b++)
-        if(mat[a][b]==0){
+        if(p->mat[a][b]==0){
           for(c=0;c<=2;c++){
-            line_h+=mat[a][c];
-            line_v+=mat[c][b];
+            line_h+=p->mat[a][c];
+            line_v+=p->mat[c][b];
           }
         if((((a==0)&&(b==0))||((a==1)&&(b==1))||((a==2)&&(b==2)))&&(d1==simb))
           cont_d++;
@@ -211,47 +217,47 @@ int bloquear_vantagem(int simb, int simb_op){
 }
 
 
-int jogar_centro(int simb){
-  if(mat[1][1]==0)
+int jogar_centro(campo *p, int simb){
+  if(p->mat[1][1]==0)
     return 4;
   return 9;
 }
 
-int verificar_canto(int simb){
+int verificar_canto(campo *p, int simb){
 
-  if((mat[0][0]==simb)&&(mat[2][2]==0))
+  if((p->mat[0][0]==simb)&&(p->mat[2][2]==0))
     return 8;
-  if((mat[0][2]==simb)&&(mat[2][0]==0))
+  if((p->mat[0][2]==simb)&&(p->mat[2][0]==0))
     return 6;
-  if((mat[2][0]==simb)&&(mat[0][2]==0))
+  if((p->mat[2][0]==simb)&&(p->mat[0][2]==0))
     return 2;
-  if((mat[2][2]==simb)&&(mat[0][0]==0))
+  if((p->mat[2][2]==simb)&&(p->mat[0][0]==0))
     return 0;
   return 9;
 }
 
-int jogar_canto(int simb){
+int jogar_canto(campo *p, int simb){
 
-  if(mat[0][0]==0)
+  if(p->mat[0][0]==0)
     return 0;
-  if(mat[0][2]==0)
+  if(p->mat[0][2]==0)
     return 2;
-  if(mat[2][0]==0)
+  if(p->mat[2][0]==0)
     return 6;
-  if(mat[2][2]==0)
+  if(p->mat[2][2]==0)
     return 8;
   return 9;
 }
 
-int jogar_lados(int simb){
+int jogar_lados(campo *p, int simb){
 
-  if(mat[0][1]==0)
+  if(p->mat[0][1]==0)
     return 1;
-  if(mat[1][0]==0)
+  if(p->mat[1][0]==0)
     return 3;
-  if(mat[1][2]==0)
+  if(p->mat[1][2]==0)
     return 5;
-  if(mat[2][1]==0)
+  if(p->mat[2][1]==0)
     return 7;
   return 9;
 }

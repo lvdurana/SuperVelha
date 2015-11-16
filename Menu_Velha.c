@@ -1,11 +1,48 @@
 #include "FGerais.c"
 
-char mat[3][3];
-char mapa[23][23];
-char nome1[15],nome2[15];
-int turno=0,vit=0;
+#define POS_VELHA_X 10
+#define POS_VELHA_Y 1
+#define COR_FUNDO PRETO_A<<4
+#define COR_TEXTO BRANCO_B
 
-int menu()
+typedef struct jogador {
+  char tipo; //0=jogador/1,2,3=computador f,m,d/4=replay
+  char num; //1,4
+  char simb; //0=o/1=x
+  char nome[15];
+} jogador;
+
+typedef struct partida {
+ int partida;
+ char JogVelha[3][3];
+ char resultado;
+ char turno[9];
+
+} partida;
+
+typedef struct campo {
+  char mapa[23][23];
+  char cur;
+  char mat[3][3];
+  char turno;
+  char jog_atual; //0 e 1
+  jogador jog[2];
+} campo;
+
+//Definir símbolos
+unsigned char simb_anim[][5][5]={
+    {{0,1,2,3,0},{3,255,255,255,1},{2,255,255,255,2},{1,255,255,255,3},{0,3,2,1,0}},
+    {{5,255,255,255,0},{255,6,255,1,255},{255,255,2,255,255},{255,3,255,8,255},{4,255,255,255,9}},
+    {{255,4,255,4,255},{3,255,5,255,3},{2,255,255,255,2},{255,1,255,1,255},{255,255,0,255,255}},
+    {{255,255,0,255,255},{255,7,255,1,255},{3,255,255,255,6},{255,2,255,4,255},{255,255,5,255,255}},
+    {{255,6,5,4,0},{255,7,255,255,1},{255,8,255,2,2},{9,9,255,3,3},{10,10,255,255,255}},
+    {{255,5,4,5,255},{5,4,3,4,5},{4,3,2,3,4},{255,255,1,255,255},{255,255,0,255,255}}
+
+};
+char simb_anim_tam[]={4,10,6,8,11,6};
+char simb_cor[]={AZUL_B,VERMELHO_B,ROSA_B,AMARELO_B,CIANO_B,VERDE_B};
+
+/*int menu()
 {
   int sel=1,go=0;
 
@@ -89,7 +126,7 @@ int dificuldade()
     }while(1);
 }
 
-void escolha_nome(int jogo){
+ void escolha_nome(int jogo){
   int sel=0,cont=0,i;
   char a;
 
@@ -146,7 +183,7 @@ void escolha_nome(int jogo){
 
 }
 
-void escolha_simb(char *jog1, char *jog2 )
+void escolha_simb(jogador *jog1, jogador *jog2 )
 {
   int sel=1,go=1;
 
@@ -182,7 +219,7 @@ void escolha_simb(char *jog1, char *jog2 )
     }
   }while (go != 10);
   if (sel == 1){
-    *jog1 = 1;
+    jog1->simb = 1;
     *jog2 = 4;
   }
   else{
@@ -190,3 +227,4 @@ void escolha_simb(char *jog1, char *jog2 )
     *jog2 = 1;
   }
 }
+*/

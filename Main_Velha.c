@@ -1,214 +1,99 @@
  #include <windows.h>
  #include "IA.c"
 
+/*
+Atualizar funções de cursor
+*/
+
 int velha();
-void inicializa_velha();
-int jogada_usuario(int lin, int col, char jog);
-void jogada_computador(char jog, int nivel);
-int verifica_ganhador(char jog);
-int mover_cursor(int *cur, int nivel, int simb);
+void inicializa_velha(campo *p);
+int verifica_ganhador(campo *p);
+int mover_cursor(campo *p);
 
 
-void main() {
-  int i=0;
-  for(i=200;i<=800;i+=10)
-    Beep(i,200);
-  printf(" # # \n# # #\n#   #\n # # \n  #  \n\n");
-  printf("  #  \n # # \n#   #\n # # \n  #  \n");
-  Sleep(4000);
-  while(i==0){
-    srand (time(NULL));
-    i=velha();
+int decidir_jogada(campo *p){
+  switch(p->jog[p->jog_atual].tipo){
+    case 0:
+      return mover_cursor(p);
+    case 1:
+    case 2:
+    case 3:
+      return IA(p);
+    case 4:
+      //Implementar Replay
+      break;
   }
+
 }
 
-int velha() {
-  char jog1, jog2;
-  int i, cur=4, nivel;
-
-  nivel=menu();
-  escolha_simb(&jog1,&jog2);
-  inicializa_velha();
-  inicializar_mapa();
-  //Desenhar cursor
-  cursor(cur,1);
-
-  if(1)//rand()%2)
-  while(1){
-    turno=0;
-    desenhar_tela(nivel,jog1);
-    i=mover_cursor(&cur, nivel, jog1);
-    if(i)
-      return 0;
-    if(verifica_ganhador(jog1))
-      vit=10;
-    if(vit>=9)
-      break;
-
-    turno=1;
-    if(nivel==1){
-      i=mover_cursor(&cur, nivel,jog2);
-      if(i)
-        return 0;
-    }
-    else{
-      jogada_computador(jog2,nivel);
-      vit++;
-    }
-    if(verifica_ganhador(jog2))
-      vit=20;
-    if(vit>=9)
-      break;
-
-  }
-
-  else
-  while(1){
-    turno=1;
-    if(nivel==1){
-      i=mover_cursor(&cur, nivel,jog2);
-      if(i)
-        return 0;
-    }
-    else{
-      jogada_computador(jog2,nivel);
-      vit++;
-    }
-    if(verifica_ganhador(jog2))
-      vit=20;
-    if(vit>=9)
-      break;
-
-    turno=0;
-    desenhar_tela(nivel,jog1);
-    i=mover_cursor(&cur, nivel, jog1);
-    if(i)
-      return 0;
-    if(verifica_ganhador(jog1))
-      vit=10;
-    if(vit>=9)
-      break;
-  }
-  final_do_jogo(vit);
-  return 0;
-}
-
-void inicializa_velha()
+void inicializa_velha(campo *p)
 {
   char a;
   for(a=0;a<9;a++)
-    mat[a/3][a%3]=0;
-  vit=0;
+    p->mat[a/3][a%3]=0;
+  p->turno=0;
+  p->cur=1;
 }
 
-int jogada_usuario(int lin, int col, char jog)
-{
-  if((col<0)||(col>2)||(lin<0)||(lin>2))
-    return 1;
-  if(mat[col][lin]==0){
-    mat[col][lin]=jog;
-    return 0;
-  }
-  return 2;
-}
-
-void jogada_computador(char jog, int nivel)
-{
-  int a,b;
-  desenhar_tela(nivel,jog);
-  switch(nivel){
-    case 4:
-      a=AI(jog,1);
-      mat[a/3][a%3]=jog;
-      printf("\n                                 Pensando...");
-      Sleep(2000);
-      atualizar_xo(a,jog,nivel);
-      break;
-    case 3:
-      a=AI(jog,0);
-      mat[a/3][a%3]=jog;
-      printf("\n                                 Pensando...");
-      Sleep(2000);
-      atualizar_xo(a,jog,nivel);
-      break;
-    case 2:
-      do{
-        a=rand()%3;
-        b=rand()%3;
-        if(mat[a][b]==0){
-          mat[a][b]=jog;
-          printf("\n                                 Pensando...");
-          Sleep(2000);
-          atualizar_xo((a*3+b),jog,nivel);
-          break;
-        }
-      }while(1);
-      break;
-  }
-
-}
-
-int verifica_ganhador(char jog)
+int verifica_ganhador(campo *p)
 {
   int i,j,a=0,b=0,c=0,d=0;
   for(i=0;i<=2;i++){
     for(j=0;j<=2;j++){
-        a+=mat[i][j];
-        b+=mat[j][i];
+        a+=p->mat[i][j];
+        b+=p->mat[j][i];
     }
-    if((a==(jog*3))||(b==(jog*3)))
+    if((a==(p->jog[p->jog_atual].num*3))||(b==(p->jog[p->jog_atual].num*3)))
       return 1;
     a=b=0;
-      c+=mat[i][i];
-      d+=mat[i][2-i];
+      c+=p->mat[i][i];
+      d+=p->mat[i][2-i];
   }
-  if((c==(jog*3))||(d==(jog*3)))
+  if((c==(p->jog[p->jog_atual].num*3))||(d==(p->jog[p->jog_atual].num*3)))
     return 1;
   return 0;
 }
 
-int mover_cursor(int *cur, int nivel, int simb)
+int mover_cursor(campo *p)
 {
   //Interpretação da entrada do teclado
-  while(1){
-    desenhar_tela(nivel,simb);
+  for(;;){
+    //desenhar_tela(p);
     switch(converter_entrada()){
       case 'A':
-        if((*cur%3)>0){
-          cursor(*cur,0);
-          *cur-=1;
-          cursor(*cur,1);
+        if((p->cur%3)>0){
+          cursor(p,0);
+          p->cur-=1;
+          cursor(p,1);
         }
         break;
       case 'S':
-        if((*cur/3)<2){
-          cursor(*cur,0);
-          *cur+=3;
-          cursor(*cur,1);
+        if((p->cur/3)<2){
+          cursor(p,0);
+          p->cur+=3;
+          cursor(p,1);
         }
         break;
       case 'D':
-        if((*cur%3)<2){
-          cursor(*cur,0);
-          *cur+=1;
-          cursor(*cur,1);
+        if((p->cur%3)<2){
+          cursor(p,0);
+          p->cur+=1;
+          cursor(p,1);
         }
         break;
       case 'W':
-        if((*cur/3)>0){
-          cursor(*cur,0);
-          *cur-=3;
-          cursor(*cur,1);
+        if((p->cur/3)>0){
+          cursor(p,0);
+          p->cur-=3;
+          cursor(p,1);
         }
         break;
       case 'P':
         final_do_jogo(1);
         break;
       case '\15':
-        if(jogada_usuario((*cur%3),(*cur/3),simb)==0){
-          atualizar_xo(*cur,simb,nivel);
-          vit++;
-          return 0;
+        if(p->mat[p->cur/3][p->cur%3]==0){
+          return p->cur;
         }
         break;
       case '\33':
@@ -216,11 +101,64 @@ int mover_cursor(int *cur, int nivel, int simb)
           case 0:
             break;
           case 1:
-            return 1;
+            return 9;
           case 2:
             exit;
         }
       break;
     }
+  }
+}
+
+int loop_velha(campo *p){
+  while(p->turno<9){
+    p->cur=decidir_jogada(p);
+    p->mat[p->cur/3][p->cur%3]=p->jog[p->jog_atual].num;
+    atualizar_xo(p);
+
+    if(verifica_ganhador(p))
+      break;
+    p->turno++;
+    p->jog_atual^=1;
+  }
+
+}
+
+int velha() {
+  int i;
+  campo vl;
+
+  vl.jog_atual=0;
+  vl.jog[0].nome[0]='L';
+  vl.jog[0].nome[1]='\0';
+  vl.jog[0].num=1;
+  vl.jog[0].simb=3;
+  vl.jog[0].tipo=0;
+  vl.jog[1].nome[0]='M';
+  vl.jog[1].nome[1]='\0';
+  vl.jog[1].num=4;
+  vl.jog[1].simb=5;
+  vl.jog[1].tipo=0;
+  inicializa_velha(&vl);
+  inicializar_mapa(&vl);
+  //Desenhar tela
+  desenhar_tela(&vl);
+  cursor(&vl,1);
+  loop_velha(&vl);
+  //final_do_jogo(vit);
+  return 0;
+}
+
+void main() {
+  int i=0;
+  //for(i=200;i<=800;i+=10)
+    //Beep(i,200);
+  printf(" ####\n #  #\n # ##\n## ##\n##   \n\n");
+  printf(" ### \n#####\n#####\n  #  \n  #  \n\n\16");
+
+  Sleep(4000);
+  while(i==0){
+    srand (time(NULL));
+    i=velha();
   }
 }

@@ -1,54 +1,37 @@
 #include <stdlib.h>   //rand()
 #include "Menu_Velha.c"
 
-void inicializar_mapa() {
+
+
+void inicializar_mapa(campo *p) {
   int a, b;
 
   //Inicializar mapa
   for(a=0;a<23;a++){
     for(b=0;b<23;b++){
       if((b==7)||(b==15)||(a==7)||(a==15))
-        mapa[a][b]='\333';
+        p->mapa[a][b]='\333';
       else
-        mapa[a][b]=' ';
+        p->mapa[a][b]=' ';
     }
   }
 }
 
 
-void desenhar_tela(int nivel, int simb) {
+void desenhar_tela(campo *p) {
   int a, b;
 
 //Limpar tela
   system("cls");
-//Escrever texto
-  switch(simb){
-    case 1:
-      //TurNo do JogadOr X
-      printf("\n                                                             #   #\n");
-      printf("               \311\313\273\302 \302\302\304\277\311\273\311\332\304\277  \332\302\277\332\304\277   \313\332\304\277\332\304\277\332\304\277\332\302\277\311\315\273\302\304\277  # #\n");
-      printf("                \272 \263 \263\303\302\331\272\272\272\263 \263   \263\263\263 \263   \272\263 \263\263 \302\303\304\264 \263\263\272 \272\303\302\331   # \n");
-      printf("                \312 \300\304\331\301\300\304\274\310\274\300\304\331  \304\301\331\300\304\331  \310\274\300\304\331\300\304\331\301 \301\304\301\331\310\315\274\301\300\304  # # \n");
-      printf("                                                             #   #\n");
-      break;
-    case 4:
-      //tURno Do jogAdor O
-      printf("\n                                                             #####\n");
-      printf("               \332\302\277\313 \313\313\315\273\332\277\332\332\304\277  \311\313\273\332\304\277   \302\332\304\277\332\304\277\311\315\273\332\302\277\332\304\277\302\304\277 #   #\n");
-      printf("                \263 \272 \272\314\313\274\263\263\263\263 \263   \272\272\263 \263   \263\263 \263\263 \302\314\315\271 \263\263\263 \263\303\302\331 #   #\n");
-      printf("                \301 \310\315\274\312\310\315\331\300\331\300\304\331  \315\312\274\300\304\331  \300\331\300\304\331\300\304\331\312 \312\304\301\331\300\304\331\301\300\304 #   #\n");
-      printf("                                                             #####\n");
-      break;
-  }
   //Desenhar Mapa
-  for(a=0;a<20;a++){
-    printf("                          ");
+  for(a=0;a<23;a++){
+    gotoxy(POS_VELHA_X,POS_VELHA_Y+a);
     for(b=0;b<23;b++)
-      printf("%c",mapa[a][b]);
+      printf("%c",p->mapa[a][b]);
     printf("\n");
   }
   //Escrever Nomes
-  if(!turno) {printf(" \332\304"); for(a=0;a<strlen(nome1);a++) printf("\304");printf("\304\277");for(a=0;a<=20-strlen(nome1);a++) printf(" ");} else printf("                          ");
+/*  if(!turno) {printf(" \332\304"); for(a=0;a<strlen(nome1);a++) printf("\304");printf("\304\277");for(a=0;a<=20-strlen(nome1);a++) printf(" ");} else printf("                          ");
   for(a=0;a<23;a++) printf("%c",mapa[20][a]);
   if(turno) {for(a=0;a<=24-strlen(nome2);a++) printf(" ");printf("\332\304"); for(a=0;a<strlen(nome2);a++) printf("\304");printf("\304\277\n");}else printf("\n");
 
@@ -59,71 +42,79 @@ void desenhar_tela(int nivel, int simb) {
   if(!turno) {printf(" \300\304"); for(a=0;a<strlen(nome1);a++) printf("\304");printf("\304\331");for(a=0;a<=20-strlen(nome1);a++) printf(" ");} else printf("                          ");
   for(a=0;a<23;a++) printf("%c",mapa[22][a]);
   if(turno) {for(a=0;a<=24-strlen(nome2);a++) printf(" ");printf("\300\304"); for(a=0;a<strlen(nome2);a++) printf("\304");printf("\304\331\n");}else printf("\n");
-
+*/
 }
 
-void atualizar_xo(int pos, int simb, int nivel)
+void atualizar_xo(campo *p)
 {
-  int a,b,i;
-  a=pos/3;
-  b=pos%3;
-  switch(simb){
-    case 1:
-      for(i=0;i<=4;i++){
-        Sleep(50);
-        mapa[1+i+8*a][1+i+8*b]='#';
-        mapa[1+i+8*a][5-i+8*b]='#';
-        desenhar_tela(nivel,simb);
+  char a,b,i,j,k;
+  a=p->cur/3*8+1;
+  b=p->cur%3*8+1;
+  for(i=0;i<=simb_anim_tam[p->jog[p->jog_atual].simb];i++){
+    for(j=0;j<5;j++){
+      for(k=0;k<5;k++){
+        if(simb_anim[p->jog[p->jog_atual].simb][k][j]==i){
+          p->mapa[a+k][b+j]='#';
+          gotoxy(POS_VELHA_X+b+j,POS_VELHA_Y+a+k);
+          definir_cor(COR_FUNDO|simb_cor[p->jog[p->jog_atual].simb]);
+          printf("#");
+          definir_cor(COR_FUNDO|COR_TEXTO);
+        }
       }
-      break;
-    case 4:
-      for(i=0;i<=3;i++){
-        Sleep(50);
-        mapa[1+8*a][1+i+8*b]='#';
-        mapa[5+8*a][5-i+8*b]='#';
-        mapa[5-i+8*a][1+8*b]='#';
-        mapa[1+i+8*a][5+8*b]='#';
-        desenhar_tela(nivel,simb);
-      }
-    break;
+    }
+    Sleep(50);
   }
 
 }
 
 
-void cursor(char pos, char modo) {
+void cursor(campo *p, char modo) {
   int a, b, i;
-  a=pos/3*8;
-  b=pos%3*8;
+  a=p->cur/3*8;
+  b=p->cur%3*8;
   if(modo){
-    mapa[a][b]='\332';
-    mapa[a][6+b]='\277';
-    mapa[6+a][b]='\300';
-    mapa[6+a][b+6]='\331';
+    //Atualizar mapa
+    p->mapa[a][b]='\332';
+    p->mapa[a][6+b]='\277';
+    p->mapa[6+a][b]='\300';
+    p->mapa[6+a][b+6]='\331';
+    gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a);printf("\332\304\304\304\304\304\277");
+    gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+6);printf("\300\304\304\304\304\304\331");
     for(i=1;i<=5;i++){
-      mapa[a+i][b]='\263';
-      mapa[a][b+i]='\304';
-      mapa[6+a][b+i]='\304';
-      mapa[a+i][b+6]='\263';
+      p->mapa[a+i][b]='\263';
+      p->mapa[a][b+i]='\304';
+      p->mapa[6+a][b+i]='\304';
+      p->mapa[a+i][b+6]='\263';
+      gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+i);printf("\263");
+      gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a);printf("\304");
+      gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a+6);printf("\304");
+      gotoxy(POS_VELHA_X+b+6,POS_VELHA_Y+a+i);printf("\263");
     }
+
   }
   else{
-    mapa[a][b]=' ';
-    mapa[a][6+b]=' ';
-    mapa[6+a][b]=' ';
-    mapa[6+a][b+6]=' ';
+    p->mapa[a][b]=' ';
+    p->mapa[a][6+b]=' ';
+    p->mapa[6+a][b]=' ';
+    p->mapa[6+a][b+6]=' ';
+    gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a);printf("       ");
+    gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+6);printf("       ");
     for(i=1;i<=5;i++){
-      mapa[a+i][b]=' ';
-      mapa[a][b+i]=' ';
-      mapa[6+a][b+i]=' ';
-      mapa[a+i][b+6]=' ';
+      p->mapa[a+i][b]=' ';
+      p->mapa[a][b+i]=' ';
+      p->mapa[6+a][b+i]=' ';
+      p->mapa[a+i][b+6]=' ';
+      gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+i);printf(" ");
+      gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a);printf(" ");
+      gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a+6);printf(" ");
+      gotoxy(POS_VELHA_X+b+6,POS_VELHA_Y+a+i);printf(" ");
     }
   }
 }
 
 int final_do_jogo(int vit)
 {
-  switch(vit){
+/*  switch(vit){
     case 9:
       printf("\n                                   Empate.\n\n                                       Aperte ENTER para voltar a tela inicial");
       while(getch()!='\15');
@@ -140,5 +131,5 @@ int final_do_jogo(int vit)
       while(getch()!='\15');
       break;
   }
-
+*/
 }
