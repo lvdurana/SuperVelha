@@ -224,41 +224,71 @@ int jogar_centro(campo *p, int simb){
 }
 
 int verificar_canto(campo *p, int simb){
-
-  if((p->mat[0][0]==simb)&&(p->mat[2][2]==0))
-    return 8;
-  if((p->mat[0][2]==simb)&&(p->mat[2][0]==0))
-    return 6;
-  if((p->mat[2][0]==simb)&&(p->mat[0][2]==0))
-    return 2;
-  if((p->mat[2][2]==simb)&&(p->mat[0][0]==0))
-    return 0;
+  int v[4],a=0;
+  if((p->mat[0][0]==simb)&&(p->mat[2][2]==0)){
+    v[a]=8;
+    a++;
+  }
+  if((p->mat[0][2]==simb)&&(p->mat[2][0]==0)){
+    v[a]=6;
+    a++;
+  }
+  if((p->mat[2][0]==simb)&&(p->mat[0][2]==0)){
+    v[a]=2;
+    a++;
+  }
+  if((p->mat[2][2]==simb)&&(p->mat[0][0]==0)){
+    v[a]=0;
+    a++;
+  }
+  if (a)
+    return v[rand()%a];
   return 9;
 }
 
 int jogar_canto(campo *p, int simb){
-
-  if(p->mat[0][0]==0)
-    return 0;
-  if(p->mat[0][2]==0)
-    return 2;
-  if(p->mat[2][0]==0)
-    return 6;
-  if(p->mat[2][2]==0)
-    return 8;
+  int v[4],a=0;
+  if(p->mat[0][0]==0){
+    v[a]=0;
+    a++;
+  }
+  if(p->mat[0][2]==0){
+    v[a]=2;
+    a++;
+  }
+  if(p->mat[2][0]==0){
+    v[a]=6;
+    a++;
+  }
+  if(p->mat[2][2]==0){
+    v[a]=8;
+    a++;
+  }
+  if (a)
+    return v[rand()%a];
   return 9;
 }
 
 int jogar_lados(campo *p, int simb){
-
-  if(p->mat[0][1]==0)
-    return 1;
-  if(p->mat[1][0]==0)
-    return 3;
-  if(p->mat[1][2]==0)
-    return 5;
-  if(p->mat[2][1]==0)
-    return 7;
+  int v[4],a=0;
+  if(p->mat[0][1]==0){
+    v[a]=1;
+    a++;
+  }
+  if(p->mat[1][0]==0){
+    v[a]=3;
+    a++;
+  }
+  if(p->mat[1][2]==0){
+    v[a]=5;
+    a++;
+  }
+  if(p->mat[2][1]==0){
+    v[a]=7;
+    a++;
+  }
+  if (a)
+    return v[rand()%a];
   return 9;
 }
 
