@@ -32,7 +32,7 @@ void inicializa_velha(campo *p)
   for(a=0;a<9;a++)
     p->mat[a/3][a%3]=0;
   p->turno=0;
-  p->cur=1;
+  p->cur=4;
 }
 
 int verifica_ganhador(campo *p)
@@ -111,11 +111,9 @@ int mover_cursor(campo *p)
 }
 
 int loop_velha(campo *p){
+  char *c=p->mat;
   while(p->turno<9){
-    p->cur=decidir_jogada(p);
-    p->mat[p->cur/3][p->cur%3]=p->jog[p->jog_atual].num;
-    atualizar_xo(p);
-
+    *(c+atualizar_xo(p,decidir_jogada(p))) = p->jog[p->jog_atual].num;
     if(verifica_ganhador(p))
       break;
     p->turno++;
@@ -133,7 +131,7 @@ int velha() {
   vl.jog[0].nome[1]='\0';
   vl.jog[0].num=1;
   vl.jog[0].simb=4;
-  vl.jog[0].tipo=3;
+  vl.jog[0].tipo=0;
   vl.jog[1].nome[0]='M';
   vl.jog[1].nome[1]='\0';
   vl.jog[1].num=4;

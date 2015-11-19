@@ -45,11 +45,11 @@ void desenhar_tela(campo *p) {
 */
 }
 
-void atualizar_xo(campo *p)
+int atualizar_xo(campo *p, char pos)
 {
   char a,b,i,j,k;
-  a=p->cur/3*8+1;
-  b=p->cur%3*8+1;
+  a=pos/3*8+1;
+  b=pos%3*8+1;
   for(i=0;i<=simb_anim_tam[p->jog[p->jog_atual].simb];i++){
     for(j=0;j<5;j++){
       for(k=0;k<5;k++){
@@ -64,7 +64,7 @@ void atualizar_xo(campo *p)
     }
     Sleep(50);
   }
-
+  return pos;
 }
 
 
