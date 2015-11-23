@@ -9,26 +9,36 @@ void inicializar_mapa(campo *p) {
   //Inicializar mapa
   for(a=0;a<23;a++){
     for(b=0;b<23;b++){
+      p->mapa[a][b].cor=BRANCO_B;
       if((b==7)||(b==15)||(a==7)||(a==15))
-        p->mapa[a][b]='\333';
+        p->mapa[a][b].c='\333';
       else
-        p->mapa[a][b]=' ';
+        p->mapa[a][b].c=' ';
     }
   }
 }
 
 
-void desenhar_tela(campo *p) {
-  int a, b;
+void desenhar_tela(campo *p, char pos_x, char pos_y) {
+  int a,b;
+  char c=0;
 
-//Limpar tela
-  system("cls");
+  //Limpar tela
+  definir_cor(COR_FUNDO,COR_TEXTO);
+
+  //Desenhar Caixa
+  cursor_menu(pos_x-18,0,60,25,1);
   //Desenhar Mapa
   for(a=0;a<23;a++){
-    gotoxy(POS_VELHA_X,POS_VELHA_Y+a);
-    for(b=0;b<23;b++)
-      printf("%c",p->mapa[a][b]);
-    printf("\n");
+    gotoxy(pos_x,pos_y+a);
+    for(b=0;b<23;b++){
+      if(p->mapa[a][b].cor!=c)
+        definir_cor(COR_FUNDO,p->mapa[a][b].cor);
+      putc(p->mapa[a][b].c,stdout);
+      c=p->mapa[a][b].cor;
+
+    }
+    putc('\n',stdout);
   }
   //Escrever Nomes
 /*  if(!turno) {printf(" \332\304"); for(a=0;a<strlen(nome1);a++) printf("\304");printf("\304\277");for(a=0;a<=20-strlen(nome1);a++) printf(" ");} else printf("                          ");
@@ -45,7 +55,7 @@ void desenhar_tela(campo *p) {
 */
 }
 
-int atualizar_xo(campo *p, char pos)
+int atualizar_xo(campo *p, char pos, int pos_x, int pos_y)
 {
   char a,b,i,j,k;
   a=pos/3*8+1;
@@ -54,8 +64,9 @@ int atualizar_xo(campo *p, char pos)
     for(j=0;j<5;j++){
       for(k=0;k<5;k++){
         if(simb_anim[p->jog[p->jog_atual].simb][k][j]==i){
-          p->mapa[a+k][b+j]='#';
-          gotoxy(POS_VELHA_X+b+j,POS_VELHA_Y+a+k);
+          p->mapa[a+k][b+j].c='#';
+          p->mapa[a+k][b+j].cor=simb_cor[p->jog[p->jog_atual].simb];
+          gotoxy(pos_x+b+j,pos_y+a+k);
           definir_cor(COR_FUNDO,simb_cor[p->jog[p->jog_atual].simb]);
           printf("#");
           definir_cor(COR_FUNDO,COR_TEXTO);
@@ -74,17 +85,17 @@ void cursor(campo *p, char modo) {
   b=p->cur%3*8;
   if(modo){
     //Atualizar mapa
-    p->mapa[a][b]='\332';
-    p->mapa[a][6+b]='\277';
-    p->mapa[6+a][b]='\300';
-    p->mapa[6+a][b+6]='\331';
+    p->mapa[a][b].c='\332';
+    p->mapa[a][6+b].c='\277';
+    p->mapa[6+a][b].c='\300';
+    p->mapa[6+a][b+6].c='\331';
     gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a);printf("\332\304\304\304\304\304\277");
     gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+6);printf("\300\304\304\304\304\304\331");
     for(i=1;i<=5;i++){
-      p->mapa[a+i][b]='\263';
-      p->mapa[a][b+i]='\304';
-      p->mapa[6+a][b+i]='\304';
-      p->mapa[a+i][b+6]='\263';
+      p->mapa[a+i][b].c='\263';
+      p->mapa[a][b+i].c='\304';
+      p->mapa[6+a][b+i].c='\304';
+      p->mapa[a+i][b+6].c='\263';
       gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+i);printf("\263");
       gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a);printf("\304");
       gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a+6);printf("\304");
@@ -93,17 +104,17 @@ void cursor(campo *p, char modo) {
 
   }
   else{
-    p->mapa[a][b]=' ';
-    p->mapa[a][6+b]=' ';
-    p->mapa[6+a][b]=' ';
-    p->mapa[6+a][b+6]=' ';
+    p->mapa[a][b].c=' ';
+    p->mapa[a][6+b].c=' ';
+    p->mapa[6+a][b].c=' ';
+    p->mapa[6+a][b+6].c=' ';
     gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a);printf("       ");
     gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+6);printf("       ");
     for(i=1;i<=5;i++){
-      p->mapa[a+i][b]=' ';
-      p->mapa[a][b+i]=' ';
-      p->mapa[6+a][b+i]=' ';
-      p->mapa[a+i][b+6]=' ';
+      p->mapa[a+i][b].c=' ';
+      p->mapa[a][b+i].c=' ';
+      p->mapa[6+a][b+i].c=' ';
+      p->mapa[a+i][b+6].c=' ';
       gotoxy(POS_VELHA_X+b,POS_VELHA_Y+a+i);printf(" ");
       gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a);printf(" ");
       gotoxy(POS_VELHA_X+b+i,POS_VELHA_Y+a+6);printf(" ");

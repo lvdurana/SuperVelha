@@ -1,31 +1,53 @@
 #include "FGerais.c"
 
-#define POS_VELHA_X 10
+#define POS_VELHA_X 28
 #define POS_VELHA_Y 1
-#define COR_FUNDO PRETO_A<<4
+#define COR_FUNDO PRETO_A
 #define COR_TEXTO BRANCO_B
+#define COR_MENU PRETO_B
+#define COR_OPCOES_MENU AZUL_A
+#define COR_CURSOR_REPLAY BRANCO_B
+
+
+typedef struct controle {
+  int num_max;
+  int num_c_max;
+}controle;
 
 typedef struct jogador {
   char tipo; //0=jogador/1,2,3=computador f,m,d/4=replay
   char num; //1,4
   char simb; //0=o/1=x
-  char nome[15];
+  char nome[12];
 } jogador;
 
 typedef struct partida {
  int partida;
  char JogVelha[3][3];
- char resultado;
+ char resultado; //Primeiros 4 bits=jog_inicial, últimos 4 bits=vencedor(ou 2 se foi empate)
  char turno[9];
 
 } partida;
 
+typedef struct mapa {
+  char c;
+  char cor;
+} inter;
+
+typedef struct menu{
+  char cur;
+  char tam;
+  char opcoes[3][18];
+  char saida[3];
+}menu;
+
 typedef struct campo {
-  char mapa[23][23];
+  inter mapa[23][23];
   char cur;
   char mat[3][3];
   char turno;
   char jog_atual; //0 e 1
+  partida rec;
   jogador jog[2];
 } campo;
 
@@ -41,8 +63,323 @@ unsigned char simb_anim[][5][5]={
 };
 char simb_anim_tam[]={4,10,6,3,11,6};
 char simb_cor[]={AZUL_B,VERMELHO_B,ROSA_B,AMARELO_B,CIANO_B,VERDE_B};
+char simb_char[]={'o','x','\3','\4','\16','\5'};
+
+char menu_inic[][18]={"Novo jogo","Replay","Sair"};
+char menu_tipo_jogo[][18]={"Partida R\240pida","Campeonato"};
+
 
 //Definir músicas
+
+
+
+int registrar_partida(partida *p, char *string){
+  FILE *f;
+  if((f=fopen(string,"a"))==NULL)
+    return 0;
+  fwrite(p,sizeof(partida),1,f);
+  fclose(f);
+  return 1;
+}
+
+int registrar_cabecalho(campo *p, int num_rodadas, int posicao){
+  FILE *f;
+  if((f=fopen("reg.txt","a"))==NULL)
+    return 0;
+  fprintf(f,"%s;%d;%s;%d;%d;%d\n",p->jog[0].nome,p->jog[0].simb,p->jog[1].nome,p->jog[1].simb,num_rodadas,posicao);
+  fclose(f);
+  return 1;
+
+}
+
+void cursor_menu(int x_pos, int y_pos, int x_tam, int y_tam, char modo){
+  char i,j=x_pos+x_tam-1;
+  switch(modo){
+    case 0:
+      gotoxy(x_pos,y_pos);
+      for(i=0;i<x_tam;i++)
+        putc(' ',stdout);
+      for(i=1;i<y_tam-1;i++){
+        gotoxy(x_pos,y_pos+i);
+        putc(' ',stdout);
+        gotoxy(j,y_pos+i);
+        putc(' ',stdout);
+      }
+      gotoxy(x_pos,y_pos+y_tam-1);
+      for(i=0;i<x_tam;i++)
+        putc(' ',stdout);
+      break;
+    case 1:
+      gotoxy(x_pos,y_pos);
+      putc('\332',stdout);
+      for(i=1;i<x_tam-1;i++)
+        putc('\304',stdout);
+      putc('\277',stdout);
+      for(i=1;i<y_tam-1;i++){
+        gotoxy(x_pos,y_pos+i);
+        putc('\263',stdout);
+        gotoxy(j,y_pos+i);
+        putc('\263',stdout);
+      }
+      gotoxy(x_pos,y_pos+y_tam-1);
+      putc('\300',stdout);
+      for(i=1;i<x_tam-1;i++)
+        putc('\304',stdout);
+      putc('\331',stdout);
+      gotoxy(0,0);
+      break;
+  }
+}
+
+void menu_base(){
+  char i=0;
+  definir_cor(COR_MENU,BRANCO_B);
+  for(i=0;i<=24;i++){
+    gotoxy(60,i);
+    puts("                    ");
+  }
+  cursor_menu(60,0,20,25,1);
+  gotoxy(60,5);
+  puts("\303\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\264");
+  gotoxy(65,2);
+  definir_cor(COR_MENU,VERMELHO_A);
+  puts("Super");
+  gotoxy(70,3);
+  definir_cor(COR_MENU,AZUL_B);
+  puts("Velha");
+
+}
+
+int menu_inicial(){
+  char i,cur=0;
+
+  menu_base();
+  //Desenhar menu
+  definir_cor(CIANO_A,BRANCO_B);
+  gotoxy(61,7);
+  printf("%18s",menu_inic[0]);
+  gotoxy(61,8);
+  definir_cor(COR_MENU,AZUL_A);
+  printf("%18s",menu_inic[1]);
+  gotoxy(61,9);
+  printf("%18s",menu_inic[2]);
+
+  //Receber entrada do teclado
+  for(;;){
+    switch(converter_entrada()){
+      case 'W':
+        if(cur>0){
+          gotoxy(61,7+cur);
+          definir_cor(COR_MENU,AZUL_A);
+          printf("%18s",menu_inic[cur]);
+          cur--;
+          gotoxy(61,7+cur);
+          definir_cor(CIANO_A,BRANCO_B);
+          printf("%18s",menu_inic[cur]);
+        }
+        break;
+      case 'S':
+        if(cur<2){
+          gotoxy(61,7+cur);
+          definir_cor(COR_MENU,AZUL_A);
+          printf("%18s",menu_inic[cur]);
+          cur++;
+          gotoxy(61,7+cur);
+          definir_cor(CIANO_A,BRANCO_B);
+          printf("%18s",menu_inic[cur]);
+        }
+        break;
+      case '\15':
+        definir_cor(COR_FUNDO,COR_TEXTO) ;
+        return cur;
+    }
+
+
+  }
+}
+
+int menu_t_jogo(){
+  char i,cur=0;
+
+  //Desenhar menu
+  menu_base();
+
+  definir_cor(CIANO_A,BRANCO_B);
+  gotoxy(61,7);
+  printf("%18s",menu_tipo_jogo[0]);
+  gotoxy(61,8);
+  definir_cor(COR_MENU,AZUL_A);
+  printf("%18s",menu_tipo_jogo[1]);
+
+  //Receber entrada do teclado
+  for(;;){
+    switch(converter_entrada()){
+      case 'W':
+        if(cur>0){
+          gotoxy(61,7+cur);
+          definir_cor(COR_MENU,AZUL_A);
+          printf("%18s",menu_tipo_jogo[cur]);
+          cur--;
+          gotoxy(61,7+cur);
+          definir_cor(CIANO_A,BRANCO_B);
+          printf("%18s",menu_tipo_jogo[cur]);
+        }
+        break;
+      case 'S':
+        if(cur<1){
+          gotoxy(61,7+cur);
+          definir_cor(COR_MENU,AZUL_A);
+          printf("%18s",menu_tipo_jogo[cur]);
+          cur++;
+          gotoxy(61,7+cur);
+          definir_cor(CIANO_A,BRANCO_B);
+          printf("%18s",menu_tipo_jogo[cur]);
+        }
+        break;
+      case '\15':
+        definir_cor(COR_FUNDO,COR_TEXTO) ;
+        return cur;
+    }
+
+
+  }
+}
+
+int desenhar_dados_arq(int ind, int ind_max){
+  FILE *f, *g;
+  char nome[2][12],i,j,k,a,b;
+  int simb[2],num_jogos=0,posicao;
+  partida part;
+
+  if((f=fopen("reg.dat","rb"))==NULL)
+    return 0;
+  if((g=fopen("reg.txt","r"))==NULL){
+    fclose(f);
+    return 0;
+  }
+  //Verificar índice
+  for(i=0;i<ind;i++){
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+  }
+  menu_base();
+  definir_cor(COR_MENU,BRANCO_B);
+  for(i=0;i<2;i++){
+    if(feof(f)||feof(g))
+      break;
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+    fseek(f,posicao*sizeof(partida),SEEK_SET);
+    if(num_jogos>1){
+      gotoxy(62,8+i*7);
+      definir_cor(COR_MENU,BRANCO_B);
+      printf("  Campeonato(%d) ",num_jogos);
+      gotoxy(62,9+i*7);
+      definir_cor(COR_MENU,simb_cor[simb[0]]);
+      printf(" %-15s",nome[0]);
+      gotoxy(62,11+i*7);
+      definir_cor(COR_MENU,simb_cor[simb[1]]);
+      printf("%15s ",nome[1]);
+      definir_cor(COR_MENU,BRANCO_B);
+      gotoxy(62,10+i*7);
+      printf("       vs       ");
+      gotoxy(62,12+i*7);
+      printf("data");
+    }
+    else{
+      fread(&part,sizeof(partida),1,f);
+      gotoxy(62,8+i*7);
+      printf(" \263 \263 ");
+      definir_cor(COR_MENU,simb_cor[simb[0]]);
+      printf("%11s",nome[0]);
+      gotoxy(62,9+i*7);
+      definir_cor(COR_MENU,BRANCO_B);
+      printf("\304\305\304\305\304");
+      definir_cor(COR_MENU,simb_cor[simb[1]]);
+      printf("%11s",nome[1]);
+      gotoxy(62,10+i*7);
+      definir_cor(COR_MENU,BRANCO_B);
+      printf(" \263 \263 %d",simb[0]);
+      gotoxy(62,11+i*7);
+      printf("\304\305\304\305\304%d",simb[1]);
+      gotoxy(62,12+i*7);
+      printf(" \263 \263 %d",num_jogos);
+      //Desenhar símbolos
+      j=0;
+      k=part.resultado>>4;
+      while(j<9&&part.turno[j]!=9){
+        b=part.turno[j]/3;
+        a=part.turno[j]%3;
+        gotoxy(62+a*2,8+i*7+b*2);
+        definir_cor(COR_MENU,simb_cor[simb[k]]);
+        printf("%c",simb_char[simb[k]]);
+        k^=1;
+        j++;
+      }
+    }
+  }
+  fclose(f);
+  fclose(g);
+  gotoxy(67,23);
+  definir_cor(COR_MENU,BRANCO_B);
+  printf("Pag %d/%d",ind,ind_max);
+
+  return 1;
+}
+
+int menu_replay(int num_max){
+  char cur=0,ind=0,ind_max;
+
+  ind_max=(num_max-1)/2;
+  if(!desenhar_dados_arq(ind,ind_max))
+    return -1;
+
+  //Movimentação do cursor
+  for(;;){
+    switch(converter_entrada()){
+      case 'W':
+        if(cur>0){
+          definir_cor(COR_MENU,COR_CURSOR_REPLAY);
+          cursor_menu(61,7+cur*7,18,7,0);
+          cur--;
+          cursor_menu(61,7+cur*7,18,7,1);
+        }
+        else
+          if(ind>0){
+            ind--;
+            cur=1;
+            desenhar_dados_arq(ind,ind_max);
+            definir_cor(COR_MENU,COR_CURSOR_REPLAY);
+            cursor_menu(61,7+cur*7,18,7,1);
+          }
+        break;
+      case 'S':
+        if(cur<1){
+          definir_cor(COR_MENU,COR_CURSOR_REPLAY);
+          cursor_menu(61,7+cur*7,18,7,0);
+          cur++;
+          cursor_menu(61,7+cur*7,18,7,1);
+        }
+        else
+          if(ind<ind_max){
+            ind++;
+            cur=0;
+            desenhar_dados_arq(ind,ind_max);
+            definir_cor(COR_MENU,COR_CURSOR_REPLAY);
+            cursor_menu(61,7+cur*7,18,7,1);
+          }
+        break;
+      case '\15':
+        definir_cor(COR_FUNDO,COR_TEXTO);
+        return ind*2+cur;
+    }
+
+
+  }
+
+
+}
+
+
 
 
 /*int menu()
