@@ -36,6 +36,9 @@ void inicializa_velha(campo *p)
   p->turno=0;
   p->cur=4;
   p->rec.resultado=0;
+  p->jog_atual=rand()%2;
+  p->jog[0].num=1;
+  p->jog[1].num=4;
 }
 
 int tela_replay(int pos_cab, int pos_jog){
@@ -88,8 +91,11 @@ int escolha_replay(int pos_cab){
   for(i=0;i<=pos_cab;i++)
     fscanf(f,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
   fclose(f);
+  definir_cor(CIANO_A,BRANCO_B);
+  gotoxy(61,7);
+  printf("%18s","Partida 1");
   definir_cor(COR_MENU,COR_OPCOES_MENU);
-  for(i=1;i<=num_jogos;i++){
+  for(i=2;i<=num_jogos;i++){
     gotoxy(61,6+i);
     sprintf(nome[0],"Partida %d",i);
     printf("%18s",nome[0]);
@@ -125,6 +131,8 @@ int escolha_replay(int pos_cab){
       case '\15':
         tela_replay(pos_cab,posicao+cur);
         break;
+      case '\33':
+        return 0;
     }
   }
 }
@@ -244,42 +252,56 @@ controle carregar_controle(){
 }
 
 int velha() {
-  int i,resultado, jog_faltando=1,num_jogos;
-  campo vl[8];
+  int i=1,resultado, jog_faltando=1,num_jogos,j=0;
+  campo vl;
   FILE *f;
   controle control;
 
   //Carregar informações do arquivo de controle
   control=carregar_controle();
-  vl[0].jog_atual=0;
-  vl[0].rec.partida=1;
-  vl[0].jog[0].nome[0]='L';
-  vl[0].jog[0].nome[1]='\0';
-  vl[0].jog[0].num=1;
-  vl[0].jog[0].simb=4;
-  vl[0].jog[0].tipo=0;
-  vl[0].jog[1].nome[0]='M';
-  vl[0].jog[1].nome[1]='\0';
-  vl[0].jog[1].num=4;
-  vl[0].jog[1].simb=3;
-  vl[0].jog[1].tipo=3;
+  limpar_string(vl.jog[0].nome,12);
+  limpar_string(vl.jog[1].nome,12);
   inicializa_velha(&vl);
   inicializar_mapa(&vl);
   //Desenhar tela
   system("cls");
   desenhar_tela(&vl,18,1);
-  //printf("%d",control.num_c_max);
-  //Sleep(2000);
-  //tela_replay(4,4);
-  escolha_replay(4);
-  menu_replay(control.num_c_max);
-  printf("oi");
-  menu_inicial();
+  //Escolher menus
+  while(i){
+    switch(i){
+      case 1:
+        switch(menu_inicial()){
+          case 0:i=2;break;
+          case 1:i=3;break;
+          case 2:return 1;
+        }
+        break;
+      case 2:
+        switch(menu_t_jogo()){
+          case 1:jog_faltando=menu_campeonato();
+          case 0:determinar_jogadores(&(vl.jog[0]),10);determinar_jogadores(&(vl.jog[1]),vl.jog[0].simb);i=0;break;
+          case 2:i=1;break;
+        }
+        break;
+      case 3:
+        j=menu_replay(control.num_c_max);
+        if(j>=0){
+          escolha_replay(j);
+          break;
+        }
+        i=1;
+        break;
+    }
+  }
 
-  menu_t_jogo();
+  //tela_replay(4,4);
+  //escolha_replay(4);
+  //menu_replay(control.num_c_max);
+  definir_cor(COR_FUNDO,COR_TEXTO);
   system("cls");
   desenhar_tela(&vl,28,1);
-  //cursor(&vl,1);
+  if(!vl.jog_atual)
+    cursor(&vl,1);
 
   //Loop principal e registro da jogada inicial e vencedor
 
@@ -289,9 +311,11 @@ int velha() {
     inicializa_velha(&vl);
     inicializar_mapa(&vl);
     desenhar_tela(&vl,28,1);
-    vl[0].rec.partida=control.num_max+(num_jogos-jog_faltando);
-    vl[0].rec.resultado|=(vl[0].jog_atual<<4);
-    vl[0].rec.resultado|=loop_velha(&vl);
+    if(!vl.jog_atual)
+      cursor(&vl,1);
+    vl.rec.partida=control.num_max+(num_jogos-jog_faltando);
+    vl.rec.resultado|=(vl.jog_atual<<4);
+    vl.rec.resultado|=loop_velha(&vl);
     registrar_dados(&vl);
     jog_faltando--;
   }
@@ -303,6 +327,7 @@ int velha() {
   f=fopen("controle.dat","wb");
   fwrite(&control,sizeof(controle),1,f);
   fclose(f);
+
   return 0;
 }
 
@@ -334,7 +359,7 @@ void main() {
   //Sleep(100);
   Beep(NOTA_DS3,75);
   Beep(NOTA_F3,750);*/
-  while(i==0){
+  while(!i){
     srand (time(NULL));
     i=velha();
   }

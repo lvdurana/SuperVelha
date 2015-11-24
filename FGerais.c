@@ -141,8 +141,9 @@ void transferir_string(char* src, char*dst)
 void limpar_string(char* string, char tam)
 {
   char a=0;
-  for(;a<tam;a++)
+  for(;a<tam-1;a++)
     string[a]=' ';
+  string[a]='\0';
 }
 
 char converter_entrada()

@@ -66,7 +66,7 @@ char simb_cor[]={AZUL_B,VERMELHO_B,ROSA_B,AMARELO_B,CIANO_B,VERDE_B};
 char simb_char[]={'o','x','\3','\4','\16','\5'};
 
 char menu_inic[][18]={"Novo jogo","Replay","Sair"};
-char menu_tipo_jogo[][18]={"Partida R\240pida","Campeonato"};
+char menu_tipo_jogo[][18]={"Partida R\240pida","Campeonato","Voltar"};
 
 
 //Definir músicas
@@ -226,7 +226,7 @@ int menu_t_jogo(){
         }
         break;
       case 'S':
-        if(cur<1){
+        if(cur<2){
           gotoxy(61,7+cur);
           definir_cor(COR_MENU,AZUL_A);
           printf("%18s",menu_tipo_jogo[cur]);
@@ -239,6 +239,8 @@ int menu_t_jogo(){
       case '\15':
         definir_cor(COR_FUNDO,COR_TEXTO) ;
         return cur;
+      case '\33':
+        return 2;
     }
 
 
@@ -332,7 +334,9 @@ int menu_replay(int num_max){
   ind_max=(num_max-1)/2;
   if(!desenhar_dados_arq(ind,ind_max))
     return -1;
-
+  //gotoxy(61,6);
+  //puts(" Partidas salvas: ");
+  cursor_menu(61,7,18,7,1);
   //Movimentação do cursor
   for(;;){
     switch(converter_entrada()){
@@ -353,7 +357,7 @@ int menu_replay(int num_max){
           }
         break;
       case 'S':
-        if(cur<1){
+        if(cur<1&&cur+ind*2<num_max-1){
           definir_cor(COR_MENU,COR_CURSOR_REPLAY);
           cursor_menu(61,7+cur*7,18,7,0);
           cur++;
@@ -371,6 +375,8 @@ int menu_replay(int num_max){
       case '\15':
         definir_cor(COR_FUNDO,COR_TEXTO);
         return ind*2+cur;
+      case '\33':
+        return -1;
     }
 
 
@@ -379,6 +385,182 @@ int menu_replay(int num_max){
 
 }
 
+int menu_campeonato(){
+  char cur=3;
+  menu_base();
+  definir_cor(COR_MENU,BRANCO_B);
+  gotoxy(61,7);
+  puts(" Quantas partidas ");
+  gotoxy(61,8);
+  puts(" v\306o ser jogadas? ");
+  gotoxy(61,10);
+  puts("       \332\304\304\277");
+  gotoxy(61,11);
+  puts("       \263 3\263\31");
+  gotoxy(61,12);
+  puts("       \300\304\304\331");
+
+  //Entrada do teclado
+  for(;;){
+    switch(converter_entrada()){
+      case 'W':
+        if(cur>3){
+          gotoxy(69,11);
+          cur-=2;
+          if(cur>3)
+            printf("%2d\263\22",cur);
+          else
+            printf("%2d\263\31",cur);
+        }
+
+        break;
+      case 'S':
+        if(cur<11){
+          gotoxy(69,11);
+          cur+=2;
+          if(cur<11)
+            printf("%2d\263\22",cur);
+          else
+            printf("%2d\263\30",cur);
+        }
+        break;
+      case '\15':
+        return cur;
+    }
+  }
+}
+
+int determinar_jogadores(jogador *j,char num){
+  char i,cur=0,cont=0;
+  char msg[3][8]={" F\240cil "," M\202dio ","Dif\241cil"};
+
+  menu_base();
+  definir_cor(COR_MENU,BRANCO_B);
+  gotoxy(61,6);
+  printf("    Jogador %d",num>5?1:2);
+  gotoxy(61,9);
+  puts("  Insira o Nome");
+  gotoxy(61,10);
+  puts(" \332\304\304\304\304\304\304\304\304\304\304\304\304\304\277");
+  gotoxy(61,11);
+  puts(" \263             \263");
+  gotoxy(61,12);
+  puts(" \300\304\304\304\304\304\304\304\304\304\304\304\304\304\331");
+  gotoxy(61,14);
+  puts("  Usu\240rio");
+  gotoxy(61,17);
+  puts(" Computador");
+  definir_cor(COR_MENU,BRANCO_A);
+  gotoxy(71,19);
+  puts(" F\240cil ");
+  //Escrever símbolos
+  for(i=0;i<6;i++){
+    gotoxy(62+i*3,22);
+    if(i==num)
+      definir_cor(COR_MENU,BRANCO_A);
+    else
+      definir_cor(COR_MENU,simb_cor[i]);
+    printf("%c",simb_char[i]);
+  }
+  definir_cor(COR_MENU,BRANCO_B);
+  while(entrada(12,j->nome,&cur,1)){
+    gotoxy(64,11);
+    printf("%s",j->nome);
+  }
+  cur=0;
+  gotoxy(61,8);
+  puts(" Escolha quem vai ");
+  gotoxy(61,9);
+  puts("   controlar(\22)   ");
+  cursor_menu(61,13,12,3,1);
+  while(!cont){
+    switch(converter_entrada()){
+      case 'W':
+        if(cur){
+          cursor_menu(61,13+cur*3,12,3,0);
+          cur--;
+          cursor_menu(61,13+cur*3,12,3,1);
+        }
+        break;
+      case 'S':
+        if(!cur){
+          cursor_menu(61,13+cur*3,12,3,0);
+          cur++;
+          cursor_menu(61,13+cur*3,12,3,1);
+        }
+        break;
+      case '\15':
+        if(cur){
+          cur=0;
+          gotoxy(61,8);
+          puts("     Escolha a    ");
+          gotoxy(61,9);
+          puts("   dificuldade(\35) ");
+          gotoxy(71,19);
+          puts(" F\240cil ");
+          while(!cont){
+            switch(converter_entrada()){
+              case 'A':
+                if(cur){
+                  cur--;
+                  gotoxy(71,19);
+                  printf("%s",msg[cur]);
+                }
+                break;
+              case 'D':
+                if(cur<2){
+                  cur++;
+                  gotoxy(71,19);
+                  printf("%s",msg[cur]);
+                }
+                break;
+              case '\15':
+                j->tipo=cur+1;
+                cont=1;
+                break;
+            }
+          }
+        }
+        else
+          j->tipo=0;
+        cont=1;
+    }
+  }
+  cur=0;
+  cont=0;
+  gotoxy(61,8);
+  puts("     Escolha o    ");
+  gotoxy(61,9);
+  puts("     s\241mbolo(\35)   ");
+  cursor_menu(61,21,3,3,1);
+  while(!cont){
+    switch(converter_entrada()){
+      case 'A':
+        if(cur){
+          cursor_menu(61+cur*3,21,3,3,0);
+          cur--;
+          cursor_menu(61+cur*3,21,3,3,1);
+        }
+        break;
+      case 'D':
+        if(cur<5){
+          cursor_menu(61+cur*3,21,3,3,0);
+          cur++;
+          cursor_menu(61+cur*3,21,3,3,1);
+        }
+        break;
+      case '\15':
+        if(cur!=num){
+          j->simb=cur;
+          cont=1;
+        }
+        break;
+    }
+
+
+  }
+
+}
 
 
 

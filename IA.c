@@ -76,7 +76,14 @@ int IA(campo *p)
     }
     break;
   case 1:
-    //Fazer aleatorio
+    for(;;){
+      i=rand()%3;
+      j=rand()%3;
+      if(!p->mat[i][j]){
+        i=i*3+j;
+        break;
+      }
+    }
     break;
   }
   return i;
