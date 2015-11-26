@@ -1,15 +1,16 @@
- #include <windows.h>
- #include "IA.c"
+#include "IA.c"
 
-/*
-Atualizar funções de cursor
-*/
 
-int velha();
+int decidir_jogada(campo *p);
 void inicializa_velha(campo *p);
+int tela_replay(int pos_cab, int pos_jog);
+int escolha_replay(int pos_cab);
 int verifica_ganhador(campo *p);
 int mover_cursor(campo *p);
-
+int loop_velha(campo *p);
+int registrar_dados(campo *p);
+controle carregar_controle();
+int velha();
 
 int decidir_jogada(campo *p){
   switch(p->jog[p->jog_atual].tipo){
@@ -20,14 +21,13 @@ int decidir_jogada(campo *p){
     case 3:
       return IA(p);
     case 4:
-      //Implementar Replay
+      //Replay
       break;
   }
 
 }
 
-void inicializa_velha(campo *p)
-{
+void inicializa_velha(campo *p){
   char a;
   for(a=0;a<9;a++){
     p->mat[a/3][a%3]=0;
@@ -46,7 +46,7 @@ int tela_replay(int pos_cab, int pos_jog){
   partida part;
   campo p;
   char nome[2][12],jogo_atual=0,i,j;
-  int simb[2],num_jogos=0,posicao;
+  int simb[2],num_jogos=0,posicao,placar;
 
   f=fopen("reg.dat","rb");
   g=fopen("reg.txt","r");
@@ -56,10 +56,14 @@ int tela_replay(int pos_cab, int pos_jog){
   inicializa_velha(&p);
   //Ler dados do cabeçalho
   for(i=0;i<=pos_cab;i++)
-    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao,&placar);
   fseek(f,pos_jog*sizeof(partida),SEEK_SET);
   fread(&part,sizeof(partida),1,f);
   p.jog_atual=part.resultado>>4;
+  p.jog_faltando=1;
+  p.num_jogos=1;
+  p.jog[0].placar=0;
+  p.jog[1].placar=0;
   strcpy(p.jog[0].nome,nome[0]);
   strcpy(p.jog[1].nome,nome[1]);
   p.jog[0].simb=simb[0];
@@ -68,9 +72,11 @@ int tela_replay(int pos_cab, int pos_jog){
   p.jog[1].num=4;
   p.jog[0].tipo=(p.jog[1].tipo=4);
   //Replay do jogo
-  desenhar_tela(&p,18,1);
+  desenhar_tela(&p,0,0,0);
   for(i=0;(part.turno[i]!=9&&i<9);i++){
+    desenhar_info_tela(&p,0,0,0);
     atualizar_xo(&p,part.turno[i],18,1);
+
     Sleep(500);
     p.jog_atual^=1;
   }
@@ -84,12 +90,13 @@ int tela_replay(int pos_cab, int pos_jog){
 int escolha_replay(int pos_cab){
   FILE *f;
   char nome[2][12],cur=0,i;
-  int simb[2],num_jogos,posicao;
+  int simb[2],num_jogos,posicao,placar;
+
 
   menu_base();
   f=fopen("reg.txt","r");
   for(i=0;i<=pos_cab;i++)
-    fscanf(f,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+    fscanf(f,"%[^;];%d;%[^;];%d;%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao,&placar);
   fclose(f);
   definir_cor(CIANO_A,BRANCO_B);
   gotoxy(61,7);
@@ -138,8 +145,7 @@ int escolha_replay(int pos_cab){
 }
 
 
-int verifica_ganhador(campo *p)
-{
+int verifica_ganhador(campo *p){
   int i,j,a=0,b=0,c=0,d=0;
   for(i=0;i<=2;i++){
     for(j=0;j<=2;j++){
@@ -157,11 +163,9 @@ int verifica_ganhador(campo *p)
   return 0;
 }
 
-int mover_cursor(campo *p)
-{
+int mover_cursor(campo *p){
   //Interpretação da entrada do teclado
   for(;;){
-    //desenhar_tela(p);
     switch(converter_entrada()){
       case 'A':
         if((p->cur%3)>0){
@@ -191,32 +195,30 @@ int mover_cursor(campo *p)
           cursor(p,1);
         }
         break;
-      case 'P':
-        final_do_jogo(1);
-        break;
       case '\15':
         if(p->mat[p->cur/3][p->cur%3]==0){
           return p->cur;
         }
         break;
-      case '\33':
-        switch(menu_saida()){
-          case 0:
-            break;
-          case 1:
-            return 9;
-          case 2:
-            exit;
-        }
       break;
     }
   }
 }
 
 int loop_velha(campo *p){
-  char *c=p->mat;
+  char a;
   while(p->turno<9){
-    *(c+atualizar_xo(p,(p->rec.turno[p->turno] = decidir_jogada(p)),28,1)) = p->jog[p->jog_atual].num;
+    desenhar_info_tela(p,10,0,0);
+    //Mostrar mensagem na tela de "pensando"
+    if(p->jog[p->jog_atual].tipo){
+      gotoxy(14+(41*p->jog_atual),14);
+      puts("Pensando...");
+      Sleep(1500);
+    }
+    a=decidir_jogada(p);
+    p->rec.turno[p->turno]=a;
+    atualizar_xo(p,a,28,1);
+    p->mat[a/3][a%3] = p->jog[p->jog_atual].num;
     if(verifica_ganhador(p))
       return p->jog_atual;
     p->turno++;
@@ -252,7 +254,7 @@ controle carregar_controle(){
 }
 
 int velha() {
-  int i=1,resultado, jog_faltando=1,num_jogos,j=0;
+  int i=1,resultado,j=0;
   campo vl;
   FILE *f;
   controle control;
@@ -261,11 +263,14 @@ int velha() {
   control=carregar_controle();
   limpar_string(vl.jog[0].nome,12);
   limpar_string(vl.jog[1].nome,12);
+  vl.jog_faltando=1;
+  vl.jog[0].placar=0;
+  vl.jog[1].placar=0;
   inicializa_velha(&vl);
   inicializar_mapa(&vl);
   //Desenhar tela
   system("cls");
-  desenhar_tela(&vl,18,1);
+  desenhar_tela(&vl,0,0,0);
   //Escolher menus
   while(i){
     switch(i){
@@ -278,7 +283,7 @@ int velha() {
         break;
       case 2:
         switch(menu_t_jogo()){
-          case 1:jog_faltando=menu_campeonato();
+          case 1:vl.jog_faltando=menu_campeonato();
           case 0:determinar_jogadores(&(vl.jog[0]),10);determinar_jogadores(&(vl.jog[1]),vl.jog[0].simb);i=0;break;
           case 2:i=1;break;
         }
@@ -294,35 +299,43 @@ int velha() {
     }
   }
 
-  //tela_replay(4,4);
-  //escolha_replay(4);
-  //menu_replay(control.num_c_max);
-  definir_cor(COR_FUNDO,COR_TEXTO);
-  system("cls");
-  desenhar_tela(&vl,28,1);
-  if(!vl.jog_atual)
-    cursor(&vl,1);
-
   //Loop principal e registro da jogada inicial e vencedor
-
-  num_jogos=jog_faltando;
-  while(jog_faltando){
-
+  vl.num_jogos=vl.jog_faltando;
+  while(vl.jog_faltando){
+    i=0;
     inicializa_velha(&vl);
     inicializar_mapa(&vl);
-    desenhar_tela(&vl,28,1);
-    if(!vl.jog_atual)
+    definir_cor(COR_FUNDO,COR_TEXTO);
+    system("cls");
+    desenhar_tela(&vl,10,0,0);
+    desenhar_info_tela(&vl,10,0,0);
+    if(!(vl.jog[0].tipo&&vl.jog[1].tipo))
       cursor(&vl,1);
-    vl.rec.partida=control.num_max+(num_jogos-jog_faltando);
-    vl.rec.resultado|=(vl.jog_atual<<4);
-    vl.rec.resultado|=loop_velha(&vl);
+    vl.rec.partida=control.num_max+(vl.num_jogos-vl.jog_faltando);
+    vl.rec.resultado+=(vl.jog_atual<<4);
+    i=loop_velha(&vl);
+    vl.rec.resultado+=i;
+    //Atualizar placar
+    if(i<2)
+      vl.jog[i].placar++;
     registrar_dados(&vl);
-    jog_faltando--;
+    vl.jog_faltando--;
+    if(vl.num_jogos>1&&!vl.jog_faltando){
+      if(vl.jog[0].placar>vl.jog[1].placar)
+        tela_vitoria(&vl,0,1);
+      if(vl.jog[1].placar>vl.jog[0].placar)
+        tela_vitoria(&vl,1,1);
+      if(vl.jog[0].placar==vl.jog[1].placar)
+        tela_vitoria(&vl,2,1);
+    }
+    else
+      tela_vitoria(&vl,i,0);
+    definir_cor(COR_FUNDO,COR_TEXTO);
   }
-  //final_do_jogo(vit);
+
   //Atualizar dados
-  registrar_cabecalho(&vl,num_jogos,control.num_max);
-  control.num_max+=num_jogos;
+  registrar_cabecalho(&vl,vl.num_jogos,control.num_max);
+  control.num_max+=vl.num_jogos;
   control.num_c_max+=1;
   f=fopen("controle.dat","wb");
   fwrite(&control,sizeof(controle),1,f);
@@ -333,32 +346,6 @@ int velha() {
 
 void main() {
   int i=0;
-  FILE *f;
-  partida p;
-  //for(i=200;i<=800;i+=10)
-    //Beep(i,200);
-  /*f=fopen("reg.dat","rb");
-  while(!feof(f)){
-    fread(&p,sizeof(partida),1,f);
-    printf("|%d|%d|\n",p.partida,p.JogVelha[1][1]);
-  }
-  fclose(f);
-  Sleep(500);
-  printf(" ####\n #  #\n # ##\n## ##\n##   \n\n");
-  printf(" ### \n#####\n#####\n  #  \n  #  \n\n\16");
-  cursor_menu(5,5,3,3,1);
-
-  cursor_menu(5,5,3,3,0);
-  /*Beep(NOTA_F3,75);
-  Beep(NOTA_F3,75);
-  Beep(NOTA_F3,75);
-  Beep(NOTA_F3,500);
-  Beep(NOTA_CS3,375);
-  Beep(NOTA_DS3,375);
-  Beep(NOTA_F3,250);
-  //Sleep(100);
-  Beep(NOTA_DS3,75);
-  Beep(NOTA_F3,750);*/
   while(!i){
     srand (time(NULL));
     i=velha();

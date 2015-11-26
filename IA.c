@@ -1,8 +1,13 @@
 #include "Interface_Velha.c"
 
-//  Atualizar:
-//  Entradas dif de 0/1 pra 1/2/3
-//  Converter menções à p->mat pra p->p->mat
+int IA(campo *p);
+int ganhar(campo *p, int simb);
+int gerar_vantagem(campo *p, int simb);
+int bloquear_vantagem(campo *p, int simb, int simb_op);
+int jogar_centro(campo *p, int simb);
+int verificar_canto(campo *p, int simb);
+int jogar_canto(campo *p, int simb);
+int jogar_lados(campo *p, int simb);
 
 int IA(campo *p)
 {

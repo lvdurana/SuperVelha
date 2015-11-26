@@ -3,6 +3,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 #include <windows.h>
 
 #define NOTA_C1 131
@@ -45,29 +46,28 @@
 #define NOTA_B3 988
 
 void gotoxy(int x, int y);
+void definir_cor(char b, char f);
 int entrada(char limite, char* string, char* cont, char modo);
 int verificar_char(char a,char modo);
 void tela_entrada(char* text, char *input, char tam_input,char modo);
-void transferir_string(char* src, char*dst);
 void limpar_string(char* string, char tam);
 char converter_entrada();
+int menu_saida();
 
 COORD coord={0,0};
 enum cores {PRETO_A,AZUL_A,VERDE_A,CIANO_A,VERMELHO_A,ROSA_A,AMARELO_A,BRANCO_A,PRETO_B,AZUL_B,VERDE_B,CIANO_B,VERMELHO_B,ROSA_B,AMARELO_B,BRANCO_B};
 
- void gotoxy(int x,int y)
- {
- coord.X=x;
- coord.Y=y;
- SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),coord);
- }
+void gotoxy(int x,int y){
+  coord.X=x;
+  coord.Y=y;
+  SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE),coord);
+}
 
- void definir_cor(char b, char f){
+void definir_cor(char b, char f){
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), b<<4 | f);
- }
+}
 
-int entrada(char limite, char* string, char* cont, char modo)
-{
+int entrada(char limite, char* string, char* cont, char modo){
   char a;
 
   a=getch();//56,54
@@ -128,15 +128,6 @@ void tela_entrada(char* text, char *input, char tam_input,char modo)
 
 }
 
-void transferir_string(char* src, char*dst)
-{
-  int a=-1;
-  do{
-    a++;
-    dst[a]=src[a];
-  }while(src[a]!='\0');
-
-}
 
 void limpar_string(char* string, char tam)
 {
@@ -146,8 +137,7 @@ void limpar_string(char* string, char tam)
   string[a]='\0';
 }
 
-char converter_entrada()
-{
+char converter_entrada(){
 char a;
 
 //Interpretar entrada do teclado

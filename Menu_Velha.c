@@ -18,14 +18,17 @@ typedef struct jogador {
   char tipo; //0=jogador/1,2,3=computador f,m,d/4=replay
   char num; //1,4
   char simb; //0=o/1=x
+  char placar; //Usado no modo campeonato
   char nome[12];
+
 } jogador;
 
 typedef struct partida {
- int partida;
- char JogVelha[3][3];
- char resultado; //Primeiros 4 bits=jog_inicial, últimos 4 bits=vencedor(ou 2 se foi empate)
- char turno[9];
+ unsigned char partida;
+ unsigned char JogVelha[3][3];
+ unsigned char turno[9];
+ unsigned char resultado; //Primeiros 4 bits=jog_inicial, últimos 4 bits=vencedor(ou 2 se foi empate)
+
 
 } partida;
 
@@ -47,6 +50,8 @@ typedef struct campo {
   char mat[3][3];
   char turno;
   char jog_atual; //0 e 1
+  char jog_faltando;
+  char num_jogos;
   partida rec;
   jogador jog[2];
 } campo;
@@ -68,14 +73,23 @@ char simb_char[]={'o','x','\3','\4','\16','\5'};
 char menu_inic[][18]={"Novo jogo","Replay","Sair"};
 char menu_tipo_jogo[][18]={"Partida R\240pida","Campeonato","Voltar"};
 
-
-//Definir músicas
+int registrar_partida(partida *p, char *string);
+int registrar_cabecalho(campo *p, int num_rodadas, int posicao);
+partida ler_partida(char *string, int num);
+void cursor_menu(int x_pos, int y_pos, int x_tam, int y_tam, char modo);
+void menu_base();
+int menu_inicial();
+int menu_t_jogo();
+int desenhar_dados_arq(int ind, int ind_max);
+int menu_replay(int num_max);
+int menu_campeonato();
+int determinar_jogadores(jogador *j,char num);
 
 
 
 int registrar_partida(partida *p, char *string){
   FILE *f;
-  if((f=fopen(string,"a"))==NULL)
+  if((f=fopen(string,"ab"))==NULL)
     return 0;
   fwrite(p,sizeof(partida),1,f);
   fclose(f);
@@ -86,9 +100,20 @@ int registrar_cabecalho(campo *p, int num_rodadas, int posicao){
   FILE *f;
   if((f=fopen("reg.txt","a"))==NULL)
     return 0;
-  fprintf(f,"%s;%d;%s;%d;%d;%d\n",p->jog[0].nome,p->jog[0].simb,p->jog[1].nome,p->jog[1].simb,num_rodadas,posicao);
+  fprintf(f,"%s;%d;%s;%d;%d;%d;%d\n",p->jog[0].nome,p->jog[0].simb,p->jog[1].nome,p->jog[1].simb,num_rodadas,posicao,p->jog[0].placar<<4|p->jog[1].placar);
   fclose(f);
   return 1;
+
+}
+
+partida ler_partida(char *string, int num){
+  FILE *f;
+  partida p;
+
+  f=fopen(string,"rb");
+  fseek(f,num*sizeof(partida),SEEK_SET);
+  fread(&p,sizeof(partida),1,f);
+  return p;
 
 }
 
@@ -250,7 +275,7 @@ int menu_t_jogo(){
 int desenhar_dados_arq(int ind, int ind_max){
   FILE *f, *g;
   char nome[2][12],i,j,k,a,b;
-  int simb[2],num_jogos=0,posicao;
+  int simb[2],num_jogos=0,posicao,placar;
   partida part;
 
   if((f=fopen("reg.dat","rb"))==NULL)
@@ -261,15 +286,15 @@ int desenhar_dados_arq(int ind, int ind_max){
   }
   //Verificar índice
   for(i=0;i<ind;i++){
-    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
-    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao,&placar);
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao,&placar);
   }
   menu_base();
   definir_cor(COR_MENU,BRANCO_B);
   for(i=0;i<2;i++){
     if(feof(f)||feof(g))
       break;
-    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao);
+    fscanf(g,"%[^;];%d;%[^;];%d;%d;%d;%d\n",nome[0],&simb[0],nome[1],&simb[1],&num_jogos,&posicao,&placar);
     fseek(f,posicao*sizeof(partida),SEEK_SET);
     if(num_jogos>1){
       gotoxy(62,8+i*7);
@@ -284,11 +309,12 @@ int desenhar_dados_arq(int ind, int ind_max){
       definir_cor(COR_MENU,BRANCO_B);
       gotoxy(62,10+i*7);
       printf("       vs       ");
-      gotoxy(62,12+i*7);
-      printf("data");
+      gotoxy(68,12+i*7);
+      printf("%dx%d",placar>>4,placar&15);
     }
     else{
       fread(&part,sizeof(partida),1,f);
+      definir_cor(COR_MENU,BRANCO_B);
       gotoxy(62,8+i*7);
       printf(" \263 \263 ");
       definir_cor(COR_MENU,simb_cor[simb[0]]);
@@ -300,11 +326,11 @@ int desenhar_dados_arq(int ind, int ind_max){
       printf("%11s",nome[1]);
       gotoxy(62,10+i*7);
       definir_cor(COR_MENU,BRANCO_B);
-      printf(" \263 \263 %d",simb[0]);
+      printf(" \263 \263 ");
       gotoxy(62,11+i*7);
-      printf("\304\305\304\305\304%d",simb[1]);
+      printf("\304\305\304\305\304");
       gotoxy(62,12+i*7);
-      printf(" \263 \263 %d",num_jogos);
+      printf(" \263 \263 ");
       //Desenhar símbolos
       j=0;
       k=part.resultado>>4;
@@ -378,11 +404,7 @@ int menu_replay(int num_max){
       case '\33':
         return -1;
     }
-
-
   }
-
-
 }
 
 int menu_campeonato(){
@@ -556,197 +578,6 @@ int determinar_jogadores(jogador *j,char num){
         }
         break;
     }
-
-
-  }
-
-}
-
-
-
-/*int menu()
-{
-  int sel=1,go=0;
-
-  //Tela inicial
-  system("color 8F");
-  system("cls");
-  printf("\n\n\n                                                 \n   _                  _                _ _       \n  |_|___ ___ ___    _| |___    _ _ ___| | |_ ___ \n  | | . | . | . |  | . | .'|  | | | -_| |   | .'|\n _| |___|_  |___|  |___|__,|   \\_/|___|_|_|_|__,|\n|___|   |___|                                    \n");
-  printf("\n\n\n\n\n\n\n\n\n\n\nAPERTE QUALQUER TECLA");
-  getch();
-  system("cls");
-  //Escolher modo
-  do{
-    system("cls");
-    printf("\n\n   Escolha um advers\240rio:\n\n\n");
-    if (sel == 1){
-      printf("   \332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277\n");
-      printf("   \263    Humano    \263            ");printf ("   Computador\n");
-      printf("   \300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331");
-    }
-    else{
-      printf("                               ");printf("\332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277\n");
-      printf("        Humano                 ");printf("\263  Computador  \263\n");
-      printf("                               ");printf("\300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331");
-    }
-    switch (converter_entrada()){
-      case ('A'):
-      case ('D'):
-        sel *= -1;
-        break;
-      case ('\15'):
-        go = 10;
-        break;
-    }
-  }while (go != 10);
-
-  if(sel<1)
-    sel=dificuldade();
-  escolha_nome(sel);
-  return(sel);
-}
-
-
-int dificuldade()
-{
-  int sel=2,hard;
-  do{
-    system("cls");
-    printf("\n\n   Escolha um nivel de difilcudade\n\n\n");
-    switch(sel){
-      case 2:
-        printf("   \332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277\n");
-        printf("   \263    F\240cil     \263                 M\202dio                       Dif\241cil\n");
-        printf("   \300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331");
-        break;
-      case 3:
-        printf("                               \332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277\n");
-        printf ("        F\240cil                  \263    M\202dio     \263                 Dif\241cil\n");
-        printf("                               \300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331           ");
-        break;
-      case 4:
-        printf("                                                           \332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277\n");
-        printf ("        F\240cil                       M\202dio                  \263    Dif\241cil   \263\n");
-        printf("                                                           \300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331");
-    }
-
-    switch (converter_entrada()){
-      case ('A'):
-        sel -= 1;
-        break;
-      case ('D'):
-        sel += 1;
-        break;
-      case ('\15'):
-        return(sel);
-        break;
-    }
-    if (sel == 5)
-      sel = 2;
-    if (sel == 1)
-      sel = 4;
-    }while(1);
-}
-
- void escolha_nome(int jogo){
-  int sel=0,cont=0,i;
-  char a;
-
-  for(i=0;i<=10;i++){
-    nome1[i]=' ';
-    nome2[i]=' ';
-  }
-
-  do{
-    system("cls");
-    if(jogo==1)
-      printf("\n\n   Escolha o nome dos jogadores");
-    else
-      printf("\n\n   Escolha o seu nome");
-    printf("\n\n\n         Jogador 1");if(jogo==1) printf("                       Jogador 2\n");else printf("\n");
-    printf("   \332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277");if(jogo==1) printf("           \332\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\277\n");else printf("\n");
-    printf("   \263  ");for(i=0;i<=14;i++) printf("%c",nome1[i]);printf("  \263");    if(jogo==1){printf("           \263  ");for(i=0;i<=14;i++) printf("%c",nome2[i]);printf("  \263\n");}else printf("\n");
-    printf("   \300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331");if(jogo==1) printf("           \300\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\304\331\n");
-    //Ler entrada do teclado
-    a=getch();
-    if(cont<14)
-      if(((a>64)&&(a<91))||((a>96)&&(a<123))){
-        if(sel==0)
-          nome1[cont]=a;
-        else
-          nome2[cont]=a;
-        cont++;
-      }
-    if(cont>0){
-      //Interpretar Enter
-      if(a=='\15'){
-        if(sel)
-          nome2[cont]='\0';
-        else
-          nome1[cont]='\0';
-        sel++;
-        cont=0;
-      }
-      //Interpretar Backspace
-      if(a=='\10'){
-        cont--;
-        if(sel==0)
-          nome1[cont]=' ';
-        else
-          nome2[cont]=' ';
-      }
-    }
-
-  }while ((sel < 1)||((sel<2)&&(jogo==1)));
-
-  if(jogo>1){
-    strcpy(nome2,"Computador");
-  }
-
-}
-
-void escolha_simb(jogador *jog1, jogador *jog2 )
-{
-  int sel=1,go=1;
-
-  do{
-    system("cls");
-    printf("\n\n       Escolha o s\241mbolo com o qual %s vai jogar:\n\n\n",nome1);
-    if(sel>0){
-      printf("       \332\304\304\304\304\304\304\304\277\n");
-      printf("       \263 #   # \263              #####  \n");
-      printf("       \263  # #  \263              #   #  \n");
-      printf("       \263   #   \263              #   #  \n");
-      printf("       \263  # #  \263              #   #  \n");
-      printf("       \263 #   # \263              #####  \n");
-      printf("       \300\304\304\304\304\304\304\304\331");
-    }
-    else{
-      printf("                            \332\304\304\304\304\304\304\304\277\n");
-      printf("         #   #              \263 ##### \263\n");
-      printf("          # #               \263 #   # \263\n");
-      printf("           #                \263 #   # \263\n");
-      printf("          # #               \263 #   # \263\n");
-      printf("         #   #              \263 ##### \263\n");
-      printf("                            \300\304\304\304\304\304\304\304\331\n");
-    }
-    switch (converter_entrada()){
-      case ('A'):
-      case ('D'):
-        sel *= -1;
-        break;
-      case ('\15'):
-        go = 10;
-        break;
-    }
-  }while (go != 10);
-  if (sel == 1){
-    jog1->simb = 1;
-    *jog2 = 4;
-  }
-  else{
-    *jog1 = 4;
-    *jog2 = 1;
   }
 }
-*/
+
