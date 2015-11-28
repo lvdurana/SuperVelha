@@ -235,6 +235,8 @@ int menu_t_jogo(){
   gotoxy(61,8);
   definir_cor(COR_MENU,AZUL_A);
   printf("%18s",menu_tipo_jogo[1]);
+  gotoxy(61,9);
+  printf("%18s",menu_tipo_jogo[2]);
 
   //Receber entrada do teclado
   for(;;){
